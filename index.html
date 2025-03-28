@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EvoCalendar</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #F5F6F7;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px;
+            position: relative;
+        }
+        .month-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.7;
+        }
+        .title {
+            display: flex;
+            flex-direction: column;
+            line-height: 1;
+        }
+        .title h1 {
+            font-size: 72px;
+            font-weight: bold;
+            color: black;
+        }
+        .title h2 {
+            font-size: 24px;
+            color: #666;
+            margin-top: 5px;
+            font-weight: 300;
+        }
+        .title h3 {
+            font-size: 14px;
+            color: #999;
+            margin-top: 10px;
+            font-weight: 300;
+        }
+        .calendar-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .calendar-grid-container {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-top: 10px;
+        }
+        .day-names {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .day-names div {
+            color: #888;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+        .calendar-grid .day {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            aspect-ratio: 1;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            color: black;
+            background-color: rgba(255,255,255,0.8);
+        }
+        .calendar-grid .day.current {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .notes-section {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin: 10px 20px;
+            min-height: 100px;
+        }
+        .notes-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .note-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .note-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .note-item-content {
+            flex-grow: 1;
+        }
+        .note-item span.timestamp {
+            color: #888;
+            font-size: 12px;
+            display: block;
+            margin-top: 5px;
+        }
+        .note-actions {
+            position: relative;
+        }
+        .note-actions-btn {
+            color: #888;
+            font-size: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .note-actions-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 10;
+            display: none;
+            min-width: 100px;
+        }
+        .note-actions-menu div {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .note-actions-menu div:hover {
+            background-color: #f0f0f0;
+        }
+        .add-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            z-index: 10;
+        }
+        .note-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .note-modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 350px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .note-modal-content h3 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: black;
+            font-weight: bold;
+        }
+        .note-input {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            background-color: #f0f0f0;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        .note-modal-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .save-btn, .cancel-btn {
+            flex-grow: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .save-btn {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .cancel-btn {
+            background-color: #d1d5db;
+            color: black;
+        }
+        .powered-by {
+            margin-top: 20px;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">
+            <h1 id="yearDisplay">2025</h1>
+            <h2 id="monthDisplay">March</h2>
+            <h3>EvoCalendar</h3>
+        </div>
+        <div id="monthIcon" class="month-icon"></div>
+    </div>
+
+    <div class="calendar-container">
+        <div class="day-names">
+            <div>SU</div>
+            <div>MO</div>
+            <div>TU</div>
+            <div>WE</div>
+            <div>TH</div>
+            <div>FR</div>
+            <div>SA</div>
+        </div>
+        <div class="calendar-grid-container">
+            <div id="calendarDays" class="calendar-grid">
+                <!-- Days will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <div class="notes-section">
+        <div class="notes-header">Notes</div>
+        <div id="noteList" class="note-list">
+            Show note here...
+        </div>
+    </div>
+
+    <button id="addNoteBtn" class="add-btn">+</button>
+
+    <div class="note-modal" id="noteModal">
+        <div class="note-modal-content">
+            <h3 id="noteModalTitle">Add Note</h3>
+            <input type="text" id="noteInput" class="note-input" placeholder="Enter your note">
+            <div class="note-modal-buttons">
+                <button id="saveNoteBtn" class="save-btn">Save</button>
+                <button id="cancelNoteBtn" class="cancel-btn">Cancel</button>
+            </div>
+            <div class="powered-by">Powered by EvoraOS</div>
+        </div>
+    </div>
+
+    <script>
+        class CalendarApp {
+            constructor() {
+                this.currentDate = new Date();
+                this.currentMonth = this.currentDate.getMonth();
+                this.currentYear = this.currentDate.getFullYear();
+
+                this.monthNames = [
+                    'January', 'February', 'March', 'April', 
+                    'May', 'June', 'July', 'August', 
+                    'September', 'October', 'November', 'December'
+                ];
+
+                this.initializeElements();
+                this.renderCalendar();
+                this.setupEventListeners();
+                this.updateMonthIcon();
+                this.loadNotes();
+            }
+
+            initializeElements() {
+                this.yearDisplay = document.getElementById('yearDisplay');
+                this.monthDisplay = document.getElementById('monthDisplay');
+                this.calendarDays = document.getElementById('calendarDays');
+                this.monthIcon = document.getElementById('monthIcon');
+                this.addNoteBtn = document.getElementById('addNoteBtn');
+                this.noteModal = document.getElementById('noteModal');
+                this.noteInput = document.getElementById('noteInput');
+                this.saveNoteBtn = document.getElementById('saveNoteBtn');
+                this.cancelNoteBtn = document.getElementById('cancelNoteBtn');
+                this.noteList = document.getElementById('noteList');
+                this.noteModalTitle = document.getElementById('noteModalTitle');
+            }
+
+            renderCalendar() {
+                // Clear previous days
+                this.calendarDays.innerHTML = '';
+
+                // Get first and last day of the month
+                const firstDay = new Date(this.currentYear, this.currentMonth, 1);
+                const lastDay = new Date(this.currentYear, this.currentMonth + 1, 0);
+
+                // Pad with previous month's days
+                for (let i = 0; i < firstDay.getDay(); i++) {
+                    const dayElement = document.createElement('div');
+                    dayElement.classList.add('day', 'empty');
+                    this.calendarDays.appendChild(dayElement);
+                }
+
+                // Add current month's days
+                for (let day = 1; day <= lastDay.getDate(); day++) {
+                    const dayElement = document.createElement('div');
+                    dayElement.textContent = day;
+                    dayElement.classList.add('day');
+                    dayElement.dataset.date = `${this.currentYear}-${this.currentMonth + 1}-${day}`;
+
+                    // Highlight current day
+                    if (
+                        day === this.currentDate.getDate() && 
+                        this.currentMonth === this.currentDate.getMonth() &&
+                        this.currentYear === this.currentDate.getFullYear()
+                    ) {
+                        dayElement.classList.add('current');
+                    }
+
+                    // Add click event to each day
+                    dayElement.addEventListener('click', () => this.handleDayClick(dayElement.dataset.date));
+
+                    this.calendarDays.appendChild(dayElement);
+                }
+
+                // Update header
+                this.yearDisplay.textContent = this.currentYear;
+                this.monthDisplay.textContent = this.monthNames[this.currentMonth];
+            }
+
+            setupEventListeners() {
+                this.addNoteBtn.addEventListener('click', () => this.openNoteModal());
+                this.saveNoteBtn.addEventListener('click', () => this.saveNote());
+                this.cancelNoteBtn.addEventListener('click', () => this.closeNoteModal());
+                
+                // Close actions menu when clicking outside
+                document.addEventListener('click', (event) => {
+                    const actionMenus = document.querySelectorAll('.note-actions-menu');
+                    actionMenus.forEach(menu => {
+                        if (!menu.contains(event.target)) {
+                            menu.style.display = 'none';
+                        }
+                    });
+                });
+            }
+
+            updateMonthIcon() {
+                const monthIconPath = `${this.monthNames[this.currentMonth].toLowerCase()}_icon.png`;
+                this.monthIcon.style.backgroundImage = `url(${monthIconPath})`;
+            }
+
+            handleDayClick(date) {
+                this.currentSelectedDate = date;
+                this.displayNotesForDate(date);
+            }
+
+            openNoteModal(mode = 'add', noteIndex = null) {
+                if (!this.currentSelectedDate) {
+                    alert('Please select a date first');
+                    return;
+                }
+                
+                this.noteModal.style.display = 'flex';
+                this.currentNoteMode = mode;
+                this.currentNoteIndex = noteIndex;
+
+                if (mode === 'add') {
+                    this.noteModalTitle.textContent = 'Add Note';
+                    this.noteInput.value = '';
+                } else if (mode === 'edit') {
+                    this.noteModalTitle.textContent = 'Edit Note';
+                    this.noteInput.value = this.notes[this.currentSelectedDate][noteIndex].text;
+                }
+            }
+
+            closeNoteModal() {
+                this.noteModal.style.display = 'none';
+            }
+
+            saveNote() {
+                const note = this.noteInput.value.trim();
+                if (note && this.currentSelectedDate) {
+                    if (!this.notes) this.notes = {};
+                    if (!this.notes[this.currentSelectedDate]) {
+                        this.notes[this.currentSelectedDate] = [];
+                    }
+
+                    if (this.currentNoteMode === 'add') {
+                        this.notes[this.currentSelectedDate].push({
+                            text: note,
+                            timestamp: new Date().toISOString()
+                        });
+                    } else if (this.currentNoteMode === 'edit') {
+                        this.notes[this.currentSelectedDate][this.currentNoteIndex] = {
+                            text: note,
+                            timestamp: new Date().toISOString()
+                        };
+                    }
+
+                    // Save to local storage
+                    localStorage.setItem('calendarNotes', JSON.stringify(this.notes));
+
+                    // Display notes and close modal
+                    this.displayNotesForDate(this.currentSelectedDate);
+                    this.closeNoteModal();
+                }
+            }
+
+            loadNotes() {
+                const savedNotes = localStorage.getItem('calendarNotes');
+                this.notes = savedNotes ? JSON.parse(savedNotes) : {};
+            }
+
+            displayNotesForDate(date) {
+                const notesForDate = this.notes[date] || [];
+                
+                // Clear existing notes
+                this.noteList.innerHTML = notesForDate.length > 0 
+                    ? notesForDate.map((note, index) => `
+                        <div class="note-item">
+                            <div class="note-item-content">
+                                ${note.text}
+                                <span class="timestamp">${new Date(note.timestamp).toLocaleString()}</span>
+                            </div>
+                            <div class="note-actions">
+                                <span class="note-actions-btn">:</span>
+                                <div class="note-actions-menu">
+                                    <div onclick="calendarApp.openNoteModal('edit', ${index})">Edit</div>
+                                    <div onclick="calendarApp.deleteNote(${index})">Delete</div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('') 
+                    : 'Show note here...';
+
+                // Add event listeners to note actions
+                const noteActions = this.noteList.querySelectorAll('.note-actions-btn');
+                noteActions.forEach(action => {
+                    action.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        const menu = action.nextElementSibling;
+                        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+                    });
+                });
+            }
+
+            deleteNote(index) {
+                if (this.currentSelectedDate && this.notes[this.currentSelectedDate]) {
+                    this.notes[this.currentSelectedDate].splice(index, 1);
+                    
+                    // Save to local storage
+                    localStorage.setItem('calendarNotes', JSON.stringify(this.notes));
+
+                    // Refresh notes display
+                    this.displayNotesForDate(this.currentSelectedDate);
+                }
+            }
+        }
+
+        // Initialize the calendar when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.calendarApp = new CalendarApp();
+        });
+    </script>
+</body>
+</html>
